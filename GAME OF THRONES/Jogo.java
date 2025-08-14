@@ -5,71 +5,85 @@ public class Jogo {
     private Jogador jogador1;
     private Jogador jogador2;
     private Scanner scanner;
-    private jogador jogadorDaVez;
+    private Jogador jogadorDaVez;
 
     public Jogo() {
         tabuleiro = new Peca[8][8];
         scanner = new Scanner(System.in);
     }
 
-    private void inicializarJogo() {
-        System.out.print("Jogador 1 insira seu nome: ");
+    public void iniciarJogo() {
+        System.out.print("Jogador 1, insira seu nome: ");
         jogador1 = new Jogador(scanner.nextLine());
 
-        System.out.print("Jogador 2 insira seu nome: ");
+        System.out.print("Jogador 2, insira seu nome: ");
         jogador2 = new Jogador(scanner.nextLine());
 
         this.jogadorDaVez = jogador1;
-        // Posicionar peças do Jogador 1 (linhas 0 e 1)
+        
         posicionarPecasIniciais(jogador1, 0, 1);
 
-        // Posicionar peças do Jogador 2 (linhas 7 e 6)
         posicionarPecasIniciais(jogador2, 7, 6);
     }
 
     private void posicionarPecasIniciais(Jogador jogador, int linha1, int linha2) {
-        for (int i = 0; i < 3; i++) {
-            Peca guerreiro = new Guerreiro(i, linha1, jogador);
-            jogador.adicionarPeca(guerreiro);
-            tabuleiro[i][linha1] = guerreiro;
+        
+        Peca guerreiro1 = new Guerreiro(jogador, 1, linha1);
+        jogador.adicionarPeca(guerreiro1);
+        tabuleiro[1][linha1] = guerreiro1;
 
-            Peca arqueiro = new Arqueiro(i + 3, linha1, jogador);
-            jogador.adicionarPeca(arqueiro);
-            tabuleiro[i + 3][linha1] = arqueiro;
+        Peca arqueiro1 = new Arqueiro(jogador, 3, linha1);
+        jogador.adicionarPeca(arqueiro1);
+        tabuleiro[3][linha1] = arqueiro1;
 
-            Peca cavaleiro = new Cavaleiro(i + 5, linha2, jogador);
-            jogador.adicionarPeca(cavaleiro);
-            tabuleiro[i + 5][linha2] = cavaleiro;
-        }
+        Peca cavaleiro1 = new Cavaleiro(jogador, 5, linha1);
+        jogador.adicionarPeca(cavaleiro1);
+        tabuleiro[5][linha1] = cavaleiro1;
+
     }
 
     public void jogar() {
-        Jogador jogadorAtual = jogador1;
-        Jogador adversario = jogador2;
+        Jogador adversario;
 
         while (jogador1.temPecas() && jogador2.temPecas()) {
             exibirTabuleiro();
-            jogadorAtual.exibirPecas();
+            jogadorDaVez.exibirPecas();
+            
+            // Determina o adversário
+            adversario = (jogadorDaVez == jogador1) ? jogador2 : jogador1;
 
-            System.out.println(jogadorAtual.getNome() + ", escolha uma peça pelo índice:");
-            int indice = scanner.nextInt();
+            System.out.println(jogadorDaVez.getNome() + ", escolha uma peça pelo número:");
+            
+            int indice = -1;
+            
+            indice = scanner.nextInt();
+            scanner.nextLine(); 
 
-            if (indice < 0 || indice >= jogadorAtual.getPecas().size()) {
-                System.out.println("Índice inválido!");
+            if (indice < 0 || indice >= jogadorDaVez.getPecas().size()) {
+                System.out.println("Número inválido!");
                 continue;
             }
 
             Peca peca = jogadorDaVez.getPecas().get(indice);
 
-            System.out.print("Informe nova posição (x y): ");
-            int novoX = scanner.nextInt();
-            int novoY = scanner.nextInt();
+            System.out.print("Informe a nova posição (x y): ");
+            int novoX = -1, novoY = -1;
+            
+            novoX = scanner.nextInt();
+            novoY = scanner.nextInt();
+            scanner.nextLine();
+            
 
             if (!estaDentroDoTabuleiro(novoX, novoY)) {
                 System.out.println("Fora do tabuleiro!");
                 continue;
             }
 
+            if (tabuleiro[novoX][novoY] != null && tabuleiro[novoX][novoY].getJogadorDono() == jogadorDaVez) {
+                System.out.println("Você não pode mover para uma posição ocupada por sua própria peça!");
+                continue;
+            }
+            
             if (!peca.podeMoverPara(novoX, novoY)) {
                 System.out.println("Movimento inválido para esta peça!");
                 continue;
@@ -77,31 +91,26 @@ public class Jogo {
 
             Peca alvo = tabuleiro[novoX][novoY];
             if (alvo != null) {
-                if (alvo.getJogadorDono() == jogadorAtual) {
-                    System.out.println("Você não pode atacar suas próprias peças!");
-                    continue;
-                } else {
-                    // Ataque!
-                    System.out.println("Peça " + alvo.getNome() + " de " + adversario.getNome() + " foi eliminada!");
-                    adversario.removerPeca(alvo);
-                }
+                System.out.println("Peça " + alvo.getNome() + " de " + adversario.getNome() + " foi eliminada!");
+                adversario.removerPeca(alvo);
             }
-
-            // Atualizar tabuleiro
-            tabuleiro[peca.getPosicaoX()][peca.getPosicaoY()] = null;
+            
+            int xAntigo = peca.getPosicaoX();
+            int yAntigo = peca.getPosicaoY();
+            
             peca.moverPara(novoX, novoY);
+            
+            tabuleiro[xAntigo][yAntigo] = null;
+            
             tabuleiro[novoX][novoY] = peca;
-
-            // Verifica vitória
+            
             if (!adversario.temPecas()) {
-                System.out.println(jogadorAtual.getNome() + " venceu!");
+                exibirTabuleiro();
+                System.out.println(jogadorDaVez.getNome() + " venceu!");
                 break;
             }
-
-            // Alternar turno
-            Jogador temp = jogadorAtual;
-            jogadorAtual = adversario;
-            adversario = temp;
+            
+            jogadorDaVez = adversario;
         }
 
         scanner.close();
@@ -112,19 +121,21 @@ public class Jogo {
     }
 
     private void exibirTabuleiro() {
-        System.out.println("\n   0 1 2 3 4 5 6 7");
-        System.out.println("  -----------------");
+        System.out.println("\n   0  1  2  3  4  5  6  7");
+        System.out.println("  -------------------------");
         for (int y = 0; y < 8; y++) {
             System.out.print(y + " |");
             for (int x = 0; x < 8; x++) {
-                if (tabuleiro[x][y] == null) {
-                    System.out.print(" .");
+                Peca peca = tabuleiro[x][y];
+                if (peca != null) {
+                    System.out.print(" " + peca.getSimbolo() + " ");
                 } else {
-                    System.out.print(" " + tabuleiro[x][y]);
+                    System.out.print(" . ");
                 }
             }
             System.out.println();
         }
         System.out.println();
     }
+
 }
