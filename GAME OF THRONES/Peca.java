@@ -3,14 +3,14 @@ public abstract class Peca{
     private String simbolo;
     protected int posicaoX;
     protected int posicaoY;
-    private jogador jogadorDono;
+    private Jogador jogadorDono;
 
-    public Peca(String nome, String simbolo, int posicaoX, int posicaoY, boolean jogadorDono){
+    public Peca(String nome, String simbolo, int posicaoX, int posicaoY, Jogador jogadorDono){
         this.nome = nome;
         this.simbolo = simbolo;
         this.posicaoX = posicaoX;
         this.posicaoY = posicaoY;
-        this.jogadorDono =jogadorDono;
+        this.jogadorDono = jogadorDono;
     }
 
     public String getNome(){
@@ -29,7 +29,7 @@ public abstract class Peca{
         return posicaoY;
     }
     
-    public jogador getJogadorDono(){
+    public Jogador getJogadorDono(){
         return jogadorDono;
     }
 
